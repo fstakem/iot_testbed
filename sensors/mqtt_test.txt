@@ -1,0 +1,3 @@
+sudo /etc/init.d/mosquitto status
+mosquitto_sub -d -u fstakem -P password -t /dev/test
+mosquitto_pub -d -u fstakem -P password -t /dev/test -m "Mctesty"
