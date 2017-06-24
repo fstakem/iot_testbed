@@ -1,0 +1,14 @@
+[dev-packages]
+ipython = "*"
+ipdb = "*"
+sqlalchemy_schemadisplay = "*"
+ERAlchemy = "*"
+
+[packages]
+Flask-WTF = "*"
+alembic = "*"
+Flask = "*"
+Flask-RESTful = "*"
+Flask-SQLAlchemy = "*"
+SQLAlchemy = "*"
+SQLAlchemy-Utils = "*"
