@@ -6,7 +6,7 @@
 
 // Wifi
 const char* ssid                = "frugmunster";
-const char* ssid_password       = "";
+const char* ssid_password       = "xxx";
 
 // Mqtt
 const char* mqtt_server         = "hassbian.local";
@@ -43,7 +43,6 @@ void handle_msg(char* topic, byte* payload, unsigned int length);
 
 
 void setup_wifi() {
-
     delay(10);
     Serial.println();
     Serial.print("Connecting to ");
@@ -58,9 +57,8 @@ void setup_wifi() {
 
     Serial.println("");
     Serial.println("WiFi connected");
-    Serial.println("IP address: ");
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
-    Serial.println(WiFi.ping(mqtt_server));
 }
 
 void mqtt_connect() {
@@ -70,7 +68,7 @@ void mqtt_connect() {
         Serial.print("Attempting MQTT connection...");
         mqttConnAttempts += 1;
         
-        if (client.connect(mqtt_id)) {
+        if (client.connect(mqtt_id, mqtt_user, mqtt_password)) {
             Serial.println("connected");
             client.publish(mqtt_topic, test_msg);
             client.subscribe(mqtt_topic);
@@ -130,7 +128,13 @@ void setup() {
     pinMode(BUILTIN_LED, OUTPUT);
     Serial.begin(9600);
     setup_wifi();
-    client.setServer(mqtt_server, mqtt_port);
+    Serial.println("Setting mqtt server: " + String(mqtt_server));
+    Serial.println("Setting mqtt port: " + String(mqtt_port));
+    delay(10000);
+
+    IPAddress server(192,168,2,207);
+    //client.setServer(mqtt_server, mqtt_port);
+    client.setServer(server, mqtt_port);
     client.setCallback(handle_msg);
 }
 
