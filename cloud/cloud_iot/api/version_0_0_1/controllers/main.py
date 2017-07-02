@@ -13,13 +13,13 @@ from flask import current_app
 from flask_restful import Api, Resource, url_for
 from jinja2 import TemplateNotFound
 
-from cloud_iot.api.version_0_0_1.controllers.sensor import Sensor as SensorController
-from cloud_iot.api.version_0_0_1.controllers.sensor import SensorList as SensorListController
-from cloud_iot.api.version_0_0_1.controllers.sample import Sample as SampleController
-from cloud_iot.api.version_0_0_1.controllers.sample import SampleList as SampleListController
+from cloud_iot.api.version_0_0_1.controllers.sensor_controller import SensorController
+from cloud_iot.api.version_0_0_1.controllers.sensor_controller import SensorListController
+from cloud_iot.api.version_0_0_1.controllers.sample_controller import SampleController
+from cloud_iot.api.version_0_0_1.controllers.sample_controller import SampleListController
 
-#from cloud_iot.db.models.person import Person
-from cloud_iot.database import acl_db as db
+from cloud_iot.db.models.api import Session 
+from cloud_iot.db.models.sensor import Sensor
 
 
 version_value = '0_0_1'
@@ -28,7 +28,7 @@ version_name = 'app_v' + version_value
 app_v0_0_1 = Blueprint(version_name, version_name, 
     static_folder='cloud_iot/api/version_0_0_1/static', 
     static_url_path='',
-    template_folder='cloud_iot/api/version_0_0_1/templates')
+    template_folder='cloud_iot/api/version_0_0_1/views')
 
 
 # Web routes
@@ -39,6 +39,20 @@ def version_hello():
 @app_v0_0_1.route('/index')
 def index():
     return render_template('index.html')
+
+@app_v0_0_1.route('/nodes')
+def nodes():
+    session = Session()
+    sensors = session.query(Sensor).all()
+
+    return render_template('sensor_all.html', sensors=sensors)
+
+@app_v0_0_1.route('/node/<id>')
+def node(id):
+    session = Session()
+    sensors = session.query(Sensor).all()
+
+    return render_template('sensor_all.html', sensors=sensors)
 
 
 # Basic restful routes

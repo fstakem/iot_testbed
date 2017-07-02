@@ -8,19 +8,22 @@
 
 
 # Libraries
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date, Numeric
+from sqlalchemy.orm import relationship
+
+from cloud_iot.db.models.api import Base
 from cloud_iot.db.models.base_model import BaseModel
-from cloud_iot.database import acl_db as db
 
 
-class Sensor(BaseModel):
+class Sensor(BaseModel, Base):
 
     # Properties
-    sensor_id               = db.Column(db.Integer, primary_key=True)
-    name                    = db.Column(db.String(100), nullable=False)
+    sensor_id               = Column(Integer, primary_key=True)
+    name                    = Column(String(100), nullable=False)
     
     # Constraints
 
     # Relationships
-    samples                 = db.relationship("Sample", backref="sensor")
+    samples                 = relationship("Sample", backref="sensor")
 
     __tablename__ = 'sensor'

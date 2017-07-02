@@ -9,9 +9,13 @@
 
 # Libraries
 from flask_restful import Resource
+from flask import render_template
+
+from cloud_iot.db.models.api import Session 
+from cloud_iot.db.models.sensor import Sensor
 
 
-class Sensor(Resource):
+class SensorController(Resource):
 
     def get(self, id):
         return 'sensor get'
@@ -29,7 +33,7 @@ class Sensor(Resource):
         pass
 
 
-class SensorList(Resource):
+class SensorListController(Resource):
 
     def get(self):
         return 'sensors get'

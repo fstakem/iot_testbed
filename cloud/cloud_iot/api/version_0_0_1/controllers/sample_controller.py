@@ -11,7 +11,7 @@
 from flask_restful import Resource
 
 
-class Sample(Resource):
+class SampleController(Resource):
 
     def get(self, id):
         return 'sample get'
@@ -29,7 +29,7 @@ class Sample(Resource):
         pass
 
 
-class SampleList(Resource):
+class SampleListController(Resource):
 
     def get(self):
         return 'sample get'

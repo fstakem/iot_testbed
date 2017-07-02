@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "2885ed03c9fbbb3f2e338cbb52894ca2107f986493fd52110ee716c263ed466f"
+            "sha256": "4aa42dd0d79d938b299487b3b623ec061e5afc28dc9d6cf06d8abf5b939e4ad7"
         },
         "requires": {},
         "sources": [
@@ -26,9 +26,6 @@
         },
         "flask-restful": {
             "version": "==0.3.6"
-        },
-        "flask-sqlalchemy": {
-            "version": "==2.2"
         },
         "flask-wtf": {
             "version": "==0.14.2"

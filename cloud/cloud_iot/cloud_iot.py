@@ -13,9 +13,12 @@ import logging
 
 from flask import request, url_for, jsonify, Flask
 
-from cloud_iot.database import acl_db
 from cloud_iot.config.config import load_config
 from cloud_iot.api.version_0_0_1.controllers.main import app_v0_0_1
+
+from cloud_iot.db.models.api import engine, Base
+from cloud_iot.db.models.sample import Sample
+from cloud_iot.db.models.sensor import Sensor
 
 
 # Framework globals
@@ -41,7 +44,7 @@ flask_app.config['DB_NAME']                         = app_config['db_name']
 flask_app.register_blueprint(current_app)
 
 # Init DB
-acl_db.init_app(flask_app)
+Base.metadata.create_all(bind=engine)
 
 
 # App code

@@ -15,8 +15,8 @@ fileConfig(db_config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from cloud_iot.database import acl_db
-target_metadata = acl_db.metadata
+from cloud_iot.db.models.api import Base
+target_metadata = Base.metadata
 
 # Do you need to import models here?
 from cloud_iot.db.models.sensor import Sensor

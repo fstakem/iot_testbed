@@ -1,0 +1,18 @@
+{
+  "name": "cloud_iot",
+  "homepage": "https://github.com/fstakem/iot_testbed",
+  "authors": [
+    "Fredrick Stakem <fstakem@gmail.com>"
+  ],
+  "description": "Iot testbed",
+  "main": "",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "static/libs",
+    "test",
+    "tests"
+  ]
+}
