@@ -50,9 +50,12 @@ def nodes():
 @app_v0_0_1.route('/node/<id>')
 def node(id):
     session = Session()
-    sensors = session.query(Sensor).all()
+    sensor = session.query(Sensor).get(id)
 
-    return render_template('sensor_all.html', sensors=sensors)
+    values = [x.value for x in sensor.samples]
+    labels = [x.sampled_at.strftime("%H:%M") for x in sensor.samples]
+
+    return render_template('sensor.html', sensor=sensor, labels=labels, values=values)
 
 
 # Basic restful routes

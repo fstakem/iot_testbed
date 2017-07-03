@@ -27,17 +27,22 @@
           <a class="navbar-brand" href="index" style="color: black">Cloud IOT</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-          <form class="navbar-form navbar-right">
-            <a href="sensor/all" class="btn btn-info" role="button">Sensors</a>
-          </form>
+          
         </div><!--/.navbar-collapse -->
       </div>
     </nav>
 
     <div class="jumbotron" style="background-color: #2C2F40; height:300px">
       <div class="container" style="margin-top: 40px">
-        
-        
+        <h4 style="color: #868ea6">Sensors</h4>
+        <ul style="list-style-type: none;">
+          {% for sensor in sensors %}
+          <li style="color: #868ea6">
+            <a href="/node/{{sensor.sensor_id}}" style="color: #868ea6">{{sensor.name}}</a>
+          </li>
+          {% endfor %}
+        </ul>
+
       </div>
     </div>
 
