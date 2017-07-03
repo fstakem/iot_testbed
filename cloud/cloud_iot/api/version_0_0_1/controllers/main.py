@@ -62,9 +62,9 @@ def node(id):
 rest_api = Api(app_v0_0_1)
 
 rest_api.add_resource(SensorController, '/sensor/<int:id>')
-rest_api.add_resource(SensorListController, '/sensor/all')
+rest_api.add_resource(SensorListController, '/sensors')
 rest_api.add_resource(SampleController, '/sample/<int:id>')
-rest_api.add_resource(SampleListController, '/sample/all')
+rest_api.add_resource(SampleListController, '/samples')
 
 
 
