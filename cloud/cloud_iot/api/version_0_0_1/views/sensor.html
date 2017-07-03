@@ -54,39 +54,39 @@
                   backgroundColor: 'rgba(251, 85, 85, .4)',
                   borderColor: 'rgba(251, 85, 85, .4)',
                   data: [{% for item in values %} {{item}}, {% endfor %}],
-                  fill: false,
+                  fill: false
               }]
           },
           options: {
-              responsive: true,
-              title:{
-                  display:true,
-                  text:'{{sensor.name}} Graph'
-              },
-              tooltips: {
-                  mode: 'index',
-                  intersect: false,
-              },
-              hover: {
-                  mode: 'nearest',
-                  intersect: true
-              },
-              scales: {
-                  xAxes: [{
-                      display: true,
-                      scaleLabel: {
-                          display: true,
-                          labelString: 'Timestamp'
-                      }
-                  }],
-                  yAxes: [{
-                      display: true,
-                      scaleLabel: {
-                          display: true,
-                          labelString: 'Value'
-                      }
-                  }]
-              }
+            responsive: true,
+            title:{
+                display:true,
+                text:'{{sensor.name}} Graph'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Timestamp'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Value'
+                    }
+                }]
+            }
           }
       };
 
