@@ -11,8 +11,9 @@
 import requests
 import time
 import json
+from datetime import datetime
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,10 +30,16 @@ Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=en
 Base.metadata.create_all(bind=engine)
 
 session = Session()
+last_filter_time = None
 
 while True:
     for sensor_id in sensor_ids:
-        states = session.query(States).filter(States.entity_id==sensor_id)
+        if last_filter_time == None:
+            states = session.query(States).filter(States.entity_id==sensor_id)
+        else:
+            states = session.query(States).filter(and_(States.entity_id==sensor_id, States.last_updated > last_filter_time))
+
+        last_filter_time = datetime.now()
 
         for state in states:
             output = '%s %s %s' % (state.last_updated, state.state, state.attributes)

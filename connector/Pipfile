@@ -4,3 +4,4 @@ ipdb = "*"
 
 [packages]
 requests = "*"
+paho-mqtt = "*"
