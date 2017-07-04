@@ -1,0 +1,6 @@
+[dev-packages]
+ipython = "*"
+ipdb = "*"
+
+[packages]
+requests = "*"
