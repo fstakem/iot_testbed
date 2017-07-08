@@ -18,7 +18,7 @@ const char* MQTT_PASSWORD           = "password";
 // Mqtt topics
 const String MQTT_NODE_NAME         = "wemos_node/1";
 const int NUM_OF_SENSORS            = 5;
-const int mqttMaxConnAttempts       = 3;
+const int mqtt_max_conn_attempts    = 3;
 
 String get_data_topics[NUM_OF_SENSORS];
 String get_tx_topics[NUM_OF_SENSORS];
@@ -40,8 +40,8 @@ char topic_buff[200];
 
 
 // Globals
-WiFiClient wifiClient;
-PubSubClient client(wifiClient);
+WiFiClient wifi_client;
+PubSubClient client(wifi_client);
 
 
 void handle_msg(char* topic, byte* payload, unsigned int length);
@@ -79,11 +79,11 @@ void setup_wifi() {
 }
 
 void mqtt_connect() {
-    int mqttConnAttempts = 0;
+    int mqtt_conn_attempts = 0;
 
     while (!client.connected()) {
         Serial.print("Attempting MQTT connection...");
-        mqttConnAttempts += 1;
+        mqtt_conn_attempts += 1;
         
         if (client.connect(MQTT_ID, MQTT_USER, MQTT_PASSWORD)) {
             Serial.println("connected");
@@ -94,7 +94,7 @@ void mqtt_connect() {
             delay(5000);
         }
 
-        if(mqttConnAttempts >= mqttMaxConnAttempts) {
+        if(mqtt_conn_attempts >= mqtt_max_conn_attempts) {
             break;
         }
     }
@@ -119,20 +119,20 @@ void handle_msg(char* topic, byte* payload, unsigned int length) {
     }
     rx_buff[i] = '\0';
 
-    String topicStr = String(topic);
-    String msgStr = String(rx_buff);
+    String topic_str = String(topic);
+    String msg_str = String(rx_buff);
 
-    Serial.println("Message arrived:  topic: " + topicStr);
+    Serial.println("Message arrived:  topic: " + topic_str);
     Serial.println("Length: " + String(length, DEC));
-    Serial.println("Payload: " + msgStr);
+    Serial.println("Payload: " + msg_str);
 
-    if (topicStr.equals(set_tx_rate_ms_topic)) {
-        handle_set_tx_rate_ms(msgStr);
+    if (topic_str.equals(set_tx_rate_ms_topic)) {
+        handle_set_tx_rate_ms(msg_str);
     }
 
     for(i = 0; i < NUM_OF_SENSORS; i++) {
-        if (topicStr.equals(set_tx_topics[i])) {
-            handle_set_tx_topics(i, msgStr);
+        if (topic_str.equals(set_tx_topics[i])) {
+            handle_set_tx_topics(i, msg_str);
         }
     }
 }
@@ -183,8 +183,8 @@ void transmit_sensor_data(int sensor_id) {
 }
 
 void get_sensor_data(int sensor_id) {
-    long randNumber = random(1, 100);
-    String data = MQTT_NODE_NAME + "/sensor/" + String(sensor_id) + "/" + String(randNumber);
+    long rand_number = random(1, 100);
+    String data = MQTT_NODE_NAME + "/sensor/" + String(sensor_id) + "/" + String(rand_number);
     data.toCharArray(tx_buff, data.length()+1);
 }
 
