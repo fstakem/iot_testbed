@@ -5,50 +5,67 @@
 
 
 // Wifi
-const char* ssid                = "frugmunster";
-const char* ssid_password       = "xxx";
+const char* SSID                    = "frugmunster";
+const char* SSID_PASSWORD           = "xxx";
 
-// Mqtt
-const char* mqtt_server         = "hassbian.local";
-const int mqtt_port             = 1883;
-const char* mqtt_id             = "fstakem98765";
-const char* mqtt_user           = "fstakem";
-const char* mqtt_password       = "password";
-const char* mqtt_topic          = "/dev/test";
+// Mqtt general
+const char* MQTT_SERVER             = "hassbian.local";
+const int MQTT_PORT                 = 1883;
+const char* MQTT_ID                 = "fstakem98765";
+const char* MQTT_USER               = "fstakem";
+const char* MQTT_PASSWORD           = "password";
 
-// Mqtt commands
-const char* cmd_tx_on           = "";
-const char* cmd_tx_off          = "";
+// Mqtt topics
+const String MQTT_NODE_NAME         = "wemos_node/1";
+const int NUM_OF_SENSORS            = 5;
+const int mqttMaxConnAttempts       = 3;
 
-// State
-const int state_tx_on           = 0;
-const int state_tx_off          = 1;
+String get_data_topics[NUM_OF_SENSORS];
+String get_tx_topics[NUM_OF_SENSORS];
+String set_tx_topics[NUM_OF_SENSORS];
+String set_tx_rate_ms_topic         = MQTT_NODE_NAME + "/tx_rate";
+boolean sensor_tx_state[NUM_OF_SENSORS];
 
-// Other
-const char* test_msg            = "fred";  
-const int mqttMaxConnAttempts   = 3;
+// Loop
+unsigned long last_loop_time        = 0;
+int loop_time_ms                    = 5000;
+
+// Board variables
+const byte ledPin                   = 0;
+
+// Buffers
+char tx_buff[100];
+char rx_buff[100];
+char topic_buff[200];
 
 
 // Globals
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
-int state = state_tx_on;
 
-
-const byte ledPin = 0;
-unsigned long last_msg_time;
-char message_buff[100];
 
 void handle_msg(char* topic, byte* payload, unsigned int length);
 
+void create_topics() {
+    int i = 0;
+    for(i = 0; i < NUM_OF_SENSORS; i++) {
+        get_data_topics[i]  = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/data";
+        get_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/tx";
+        set_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
+        set_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
+        sensor_tx_state[i]  = false;
+    }
+
+    sensor_tx_state[0] = true;
+}
 
 void setup_wifi() {
     delay(10);
     Serial.println();
     Serial.print("Connecting to ");
-    Serial.println(ssid);
+    Serial.println(SSID);
 
-    WiFi.begin(ssid, ssid_password);
+    WiFi.begin(SSID, SSID_PASSWORD);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -68,10 +85,8 @@ void mqtt_connect() {
         Serial.print("Attempting MQTT connection...");
         mqttConnAttempts += 1;
         
-        if (client.connect(mqtt_id, mqtt_user, mqtt_password)) {
+        if (client.connect(MQTT_ID, MQTT_USER, MQTT_PASSWORD)) {
             Serial.println("connected");
-            client.publish(mqtt_topic, test_msg);
-            client.subscribe(mqtt_topic);
         } else {
             Serial.print("failed, rc=");
             Serial.print(client.state());
@@ -85,63 +100,115 @@ void mqtt_connect() {
     }
 }
 
+void mqtt_subscribe() {
+    set_tx_rate_ms_topic.toCharArray(topic_buff, set_tx_rate_ms_topic.length()+1);
+    client.subscribe(topic_buff);
+    int i;
+
+    for(i = 0; i < NUM_OF_SENSORS; i++) {
+        set_tx_topics[i].toCharArray(topic_buff, set_tx_topics[i].length()+1);
+        client.subscribe(topic_buff);
+    }
+}
+
 void handle_msg(char* topic, byte* payload, unsigned int length) {
     int i = 0;
 
-    Serial.println("Message arrived:  topic: " + String(topic));
-    Serial.println("Length: " + String(length,DEC));
-
-    for(i=0; i<length; i++) {
-        message_buff[i] = payload[i];
+    for(i = 0; i < length; i++) {
+        rx_buff[i] = payload[i];
     }
-    message_buff[i] = '\0';
+    rx_buff[i] = '\0';
 
-    String msgString = String(message_buff);
+    String topicStr = String(topic);
+    String msgStr = String(rx_buff);
 
-    Serial.println("Payload: " + msgString);
-    
-    /*
-    if (msgString.equals(CMD_TX_OFF)) {
-        state = STATE_TX_OFF;
-    } else if (msgString.equals(CMD_TX_ON)) {
-        state = STATE_TX_ON;
+    Serial.println("Message arrived:  topic: " + topicStr);
+    Serial.println("Length: " + String(length, DEC));
+    Serial.println("Payload: " + msgStr);
+
+    if (topicStr.equals(set_tx_rate_ms_topic)) {
+        handle_set_tx_rate_ms(msgStr);
     }
-    */
+
+    for(i = 0; i < NUM_OF_SENSORS; i++) {
+        if (topicStr.equals(set_tx_topics[i])) {
+            handle_set_tx_topics(i, msgStr);
+        }
+    }
+}
+
+void handle_set_tx_rate_ms(String msg) {
+    int tx_rate = msg.toInt();
+
+    if (tx_rate >= 100 && tx_rate < 60000) {
+        loop_time_ms = tx_rate;
+        Serial.println("Changed transmission rate to: " + msg);
+    } else {
+        Serial.println("Error: Incorrect transmission rate :: " + msg);
+        Serial.println("Transmission rate must be between 100 and 60000 ms");
+    }
+}
+
+void handle_set_tx_topics(int sensor_id, String msg) {
+    if (msg.equals("on")) {
+        sensor_tx_state[sensor_id] = true;
+        Serial.println("Changing state to transmitting");
+    } else if (msg.equals("off")) {
+        sensor_tx_state[sensor_id] = false;
+        Serial.println("Changing state to not transmitting");
+    } else {
+        Serial.println("Error: Unknown state :: " + msg);
+    }
 }
 
 void handle_state() {
-    if (state == state_tx_on) {
-        if (millis() > (last_msg_time + 5000)) {
-            digitalWrite(BUILTIN_LED, LOW);
-            last_msg_time = millis();
-            String pubString = test_msg;
-            pubString.toCharArray(message_buff, pubString.length()+1);
-            client.publish(mqtt_topic, message_buff);
-            digitalWrite(BUILTIN_LED, HIGH);
+    int i = 0;
+
+    if (millis() > (loop_time_ms + last_loop_time)) {
+        last_loop_time = millis();
+
+        for(i = 0; i < NUM_OF_SENSORS; i++) {
+            if (sensor_tx_state[i]) {
+                transmit_sensor_data(i);
+            }
         }
-    } else if (state == state_tx_off) {
-        
     }
+}
+
+void transmit_sensor_data(int sensor_id) {
+    get_sensor_data(sensor_id);
+    String data_topic = get_data_topics[sensor_id];
+    data_topic.toCharArray(topic_buff, data_topic.length()+1);
+    client.publish(topic_buff, tx_buff);
+}
+
+void get_sensor_data(int sensor_id) {
+    long randNumber = random(1, 100);
+    String data = MQTT_NODE_NAME + "/sensor/" + String(sensor_id) + "/" + String(randNumber);
+    data.toCharArray(tx_buff, data.length()+1);
 }
 
 void setup() {
     pinMode(BUILTIN_LED, OUTPUT);
+    digitalWrite(BUILTIN_LED, LOW);
     Serial.begin(9600);
     setup_wifi();
-    Serial.println("Setting mqtt server: " + String(mqtt_server));
-    Serial.println("Setting mqtt port: " + String(mqtt_port));
+    Serial.println("Setting mqtt server: " + String(MQTT_SERVER));
+    Serial.println("Setting mqtt port: " + String(MQTT_PORT));
     delay(10000);
 
     IPAddress server(192,168,2,207);
-    //client.setServer(mqtt_server, mqtt_port);
-    client.setServer(server, mqtt_port);
+    client.setServer(server, MQTT_PORT);
     client.setCallback(handle_msg);
+    create_topics();
 }
 
 void loop() {
     if (!client.connected()) {
         mqtt_connect();
+        mqtt_subscribe();
     }
+
     handle_state();
     client.loop();
 }
