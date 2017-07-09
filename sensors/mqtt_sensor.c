@@ -23,15 +23,12 @@ const int mqtt_max_conn_attempts    = 3;
 String get_data_topics[NUM_OF_SENSORS];
 String get_tx_topics[NUM_OF_SENSORS];
 String set_tx_topics[NUM_OF_SENSORS];
-String set_tx_rate_ms_topic         = MQTT_NODE_NAME + "/tx_rate";
+String set_tx_rate_ms_topics[NUM_OF_SENSORS];
 boolean sensor_tx_state[NUM_OF_SENSORS];
 
 // Loop
-unsigned long last_loop_time        = 0;
-int loop_time_ms                    = 5000;
-
-// Board variables
-const byte ledPin                   = 0;
+unsigned long last_loop_times[NUM_OF_SENSORS];
+int loop_times[NUM_OF_SENSORS];
 
 // Buffers
 char tx_buff[100];
@@ -48,12 +45,15 @@ void handle_msg(char* topic, byte* payload, unsigned int length);
 
 void create_topics() {
     int i = 0;
+
     for(i = 0; i < NUM_OF_SENSORS; i++) {
-        get_data_topics[i]  = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/data";
-        get_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/tx";
-        set_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
-        set_tx_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
-        sensor_tx_state[i]  = false;
+        get_data_topics[i]          = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/data";
+        get_tx_topics[i]            = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/tx";
+        set_tx_topics[i]            = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
+        set_tx_rate_ms_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx_rate_ms";
+        sensor_tx_state[i]          = false;
+        last_loop_times[i]          = 0;
+        loop_times[i]               = 5000;
     }
 
     sensor_tx_state[0] = true;
@@ -101,11 +101,12 @@ void mqtt_connect() {
 }
 
 void mqtt_subscribe() {
-    set_tx_rate_ms_topic.toCharArray(topic_buff, set_tx_rate_ms_topic.length()+1);
-    client.subscribe(topic_buff);
     int i;
 
     for(i = 0; i < NUM_OF_SENSORS; i++) {
+        set_tx_rate_ms_topics[i].toCharArray(topic_buff, set_tx_rate_ms_topics[i].length()+1);
+        client.subscribe(topic_buff);
+
         set_tx_topics[i].toCharArray(topic_buff, set_tx_topics[i].length()+1);
         client.subscribe(topic_buff);
     }
@@ -126,25 +127,25 @@ void handle_msg(char* topic, byte* payload, unsigned int length) {
     Serial.println("Length: " + String(length, DEC));
     Serial.println("Payload: " + msg_str);
 
-    if (topic_str.equals(set_tx_rate_ms_topic)) {
-        handle_set_tx_rate_ms(msg_str);
-    }
-
     for(i = 0; i < NUM_OF_SENSORS; i++) {
+        if (topic_str.equals(set_tx_rate_ms_topics[i])) {
+            handle_set_tx_rate_ms(i, msg_str);
+        }
+
         if (topic_str.equals(set_tx_topics[i])) {
             handle_set_tx_topics(i, msg_str);
         }
     }
 }
 
-void handle_set_tx_rate_ms(String msg) {
+void handle_set_tx_rate_ms(int sensor_id, String msg) {
     int tx_rate = msg.toInt();
 
     if (tx_rate >= 100 && tx_rate < 60000) {
-        loop_time_ms = tx_rate;
-        Serial.println("Changed transmission rate to: " + msg);
+        loop_times[sensor_id] = tx_rate;
+        Serial.println("Changed sensor(" + String(sensor_id) + ") transmission rate to: " + msg);
     } else {
-        Serial.println("Error: Incorrect transmission rate :: " + msg);
+        Serial.println("Error: Incorrect sensor(" + String(sensor_id) +  ") transmission rate :: " + msg);
         Serial.println("Transmission rate must be between 100 and 60000 ms");
     }
 }
@@ -164,10 +165,10 @@ void handle_set_tx_topics(int sensor_id, String msg) {
 void handle_state() {
     int i = 0;
 
-    if (millis() > (loop_time_ms + last_loop_time)) {
-        last_loop_time = millis();
+    for(i = 0; i < NUM_OF_SENSORS; i++) {
+        if (millis() > (loop_times[i] + last_loop_times[i])) {
+            last_loop_times[i] = millis();
 
-        for(i = 0; i < NUM_OF_SENSORS; i++) {
             if (sensor_tx_state[i]) {
                 transmit_sensor_data(i);
             }
