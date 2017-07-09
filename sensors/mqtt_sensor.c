@@ -21,7 +21,6 @@ const int NUM_OF_SENSORS            = 5;
 const int mqtt_max_conn_attempts    = 3;
 
 String get_data_topics[NUM_OF_SENSORS];
-String get_tx_topics[NUM_OF_SENSORS];
 String set_tx_topics[NUM_OF_SENSORS];
 String set_tx_rate_ms_topics[NUM_OF_SENSORS];
 boolean sensor_tx_state[NUM_OF_SENSORS];
@@ -47,10 +46,9 @@ void create_topics() {
     int i = 0;
 
     for(i = 0; i < NUM_OF_SENSORS; i++) {
-        get_data_topics[i]          = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/data";
-        get_tx_topics[i]            = MQTT_NODE_NAME + "/sensor/" + String(i) + "/get/tx";
-        set_tx_topics[i]            = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx";
-        set_tx_rate_ms_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/set/tx_rate_ms";
+        get_data_topics[i]          = MQTT_NODE_NAME + "/sensor/" + String(i) + "/data";
+        set_tx_topics[i]            = MQTT_NODE_NAME + "/sensor/" + String(i) + "/tx";
+        set_tx_rate_ms_topics[i]    = MQTT_NODE_NAME + "/sensor/" + String(i) + "/tx_rate_ms";
         sensor_tx_state[i]          = false;
         last_loop_times[i]          = 0;
         loop_times[i]               = 5000;
@@ -170,6 +168,7 @@ void handle_state() {
             last_loop_times[i] = millis();
 
             if (sensor_tx_state[i]) {
+                get_sensor_data(i);
                 transmit_sensor_data(i);
             }
         }
@@ -177,7 +176,6 @@ void handle_state() {
 }
 
 void transmit_sensor_data(int sensor_id) {
-    get_sensor_data(sensor_id);
     String data_topic = get_data_topics[sensor_id];
     data_topic.toCharArray(topic_buff, data_topic.length()+1);
     client.publish(topic_buff, tx_buff);
